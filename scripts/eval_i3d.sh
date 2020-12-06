@@ -2,12 +2,12 @@
 python eval_i3d.py \
     -dataset 'uavhuman' \
     -mode 'rgb' \
-    -save_model 'D:/repos/i3d_crf/models/rgb_imagenet.pt' \
-    -root_eval 'D:/data/pose_detection_sample/kinect' \
-    -eval_split 'D:/data/pose_detection_sample/train_test_split_orig.json' \
+    -save_model 'D:/repos/i3d_crf/models/rgb/' \
+    -root_eval 'D:/data/pose_detection_sample/kinect/' \
+    -eval_split 'D:/data/pose_detection_sample/train_test_split.json' \
     -snippets 64 \
     -batch_size_eval 1 \
-    -num_classes 154 \
+    -num_classes 400 \
     -crf False \
     -eval_checkpoint -1 \
     -num_workers 1

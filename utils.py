@@ -12,16 +12,17 @@ def pt_var_to_numpy(var):
 
 
 def last_checkpoint(path):
-    if not os.path.isdir(path): return ''
+    if not os.path.isdir(path):
+        raise ValueError("Path %s is not a directory of checkpoints." %path)
     
     list_elts = os.listdir(path)
 
     list_chkpt = []
     for elt in list_elts:
         if elt[-3:] == ".pt":
-            list_chkpt.append(int(elt[:-3]))
+            list_chkpt.append(elt[:-3])
 
-    return str(max(list_chkpt)).zfill(6)+".pt"
+    return str(max(list_chkpt))+".pt"
 
 
 def get_reg_loss(model, targeted_name, reg_type):

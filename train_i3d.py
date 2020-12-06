@@ -35,9 +35,7 @@ parser.add_argument('-num_updates_crf', type=int, default=1)
 parser.add_argument('-pairwise_cond_crf', type=bool, default=False)
 parser.add_argument('-reg_crf', type=float, default=-1)
 parser.add_argument('-reg_type', type=str, default='l2')
-
-
-
+parser.add_argument('-num_workers', type=int, default=8)
 
 args = parser.parse_args()
 
@@ -60,9 +58,11 @@ from pytorch_i3d import InceptionI3d
 
 dataset = args.dataset
 if dataset=='multithumos':
-    from multithumos_dataset import Multithumos as Dataset
+    from datasets.multithumos_dataset import Multithumos as Dataset
 elif dataset=='charades':
-    from charades_dataset import Charades as Dataset
+    from datasets.charades_dataset import Charades as Dataset
+elif dataset=='uavhuman':
+    from datasets.uavhuman_dataset import Uavhuman as Dataset
 
 from metrics import ap_calculator, map_calculator
 from utils import pt_var_to_numpy, last_checkpoint, Cumulator, get_reg_loss, get_param_crf
@@ -91,7 +91,8 @@ def run(init_lr=0.1,
         reg_crf=-1,
         use_cls=False,
         pairwise_cond_crf=False,
-        reg_type='l2'):
+        reg_type='l2',
+        num_workers=8):
 
     # setup dataset
     train_transforms = transforms.Compose([videotransforms.RandomCrop(224),
@@ -100,10 +101,10 @@ def run(init_lr=0.1,
     test_transforms = transforms.Compose([videotransforms.CenterCrop(224)])
 
     dataset = Dataset(train_split, 'training', root_train, mode, snippets, train_transforms)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True, drop_last=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
 
     val_dataset = Dataset(eval_split, 'testing', root_eval, mode, snippets, test_transforms)
-    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size_eval, shuffle=True, num_workers=8, pin_memory=True, drop_last=True)    
+    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size_eval, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
 
     dataloaders = {'train': dataloader, 'val': val_dataloader}
     datasets = {'train': dataset, 'val': val_dataset}
@@ -237,24 +238,24 @@ def run(init_lr=0.1,
                     loc_loss = F.binary_cross_entropy_with_logits(per_frame_logits, labels) + F.binary_cross_entropy_with_logits(per_frame_logits_ante_crf, labels)
                 else:
                     loc_loss = F.binary_cross_entropy_with_logits(per_frame_logits, labels)
-                tot_loc_loss += loc_loss.data[0]
-                tot_loc_loss_updt += loc_loss.data[0]
+                tot_loc_loss += loc_loss.item()
+                tot_loc_loss_updt += loc_loss.item()
 
                 # compute classification loss (with max-pooling along time B x C x T)
                 if crf:
                     cls_loss = F.binary_cross_entropy_with_logits(torch.max(per_frame_logits, dim=2)[0], torch.max(labels, dim=2)[0]) + F.binary_cross_entropy_with_logits(torch.max(per_frame_logits_ante_crf, dim=2)[0], torch.max(labels, dim=2)[0])
                 else:
                     cls_loss = F.binary_cross_entropy_with_logits(torch.max(per_frame_logits, dim=2)[0], torch.max(labels, dim=2)[0])
-                tot_cls_loss += cls_loss.data[0]
-                tot_cls_loss_updt += cls_loss.data[0]
+                tot_cls_loss += cls_loss.item()
+                tot_cls_loss_updt += cls_loss.item()
 
                 # compute regularization loss for the crf module
                 if crf and (reg_crf>0 and not pairwise_cond_crf) :
                     reg_loss = get_reg_loss(i3d, 'crf', reg_type)
-                    tot_reg_loss_updt += reg_loss.data[0]
+                    tot_reg_loss_updt += reg_loss.item()
                 elif crf and (reg_crf>0 and pairwise_cond_crf) :
                     reg_loss = get_reg_loss(i3d, 'psi_0', reg_type) + get_reg_loss(i3d, 'psi_1', reg_type)
-                    tot_reg_loss_updt += reg_crf*reg_loss.data[0]
+                    tot_reg_loss_updt += reg_crf*reg_loss.item()
                 else:
                     reg_loss=0
 
@@ -264,8 +265,8 @@ def run(init_lr=0.1,
                 else:
                     loss = (loc_loss + reg_crf*reg_loss)/num_steps_per_update
 
-                tot_loss += loss.data[0]
-                tot_loss_updt += loss.data[0]
+                tot_loss += loss.item()
+                tot_loss_updt += loss.item()
                 loss.backward()
 
                 if num_iter == num_steps_per_update and phase == 'train':
@@ -349,5 +350,5 @@ if __name__ == '__main__':
         reg_crf=args.reg_crf,
         use_cls=args.use_cls,
         pairwise_cond_crf=args.pairwise_cond_crf,
-        reg_type=args.reg_type)
-
+        reg_type=args.reg_type,
+        num_workers=args.num_workers)

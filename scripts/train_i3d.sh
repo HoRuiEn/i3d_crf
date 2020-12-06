@@ -4,9 +4,9 @@ python train_i3d.py \
     -mode 'rgb' \
     -save_model 'D:/repos/i3d_crf/models' \
     -root_train 'D:/data/pose_detection_sample/kinect' \
-    -train_split 'D:/data/pose_detection_sample/train_test_split.json' \
+    -train_split 'D:/data/pose_detection_sample/train_test_split_orig.json' \
     -root_eval 'D:/data/pose_detection_sample/kinect' \
-    -eval_split 'D:/data/pose_detection_sample/train_test_split.json' \
+    -eval_split 'D:/data/pose_detection_sample/train_test_split_orig.json' \
     -snippets 64 \
     -batch_size 1 \
     -batch_size_eval 1 \
@@ -18,6 +18,7 @@ python train_i3d.py \
     -use_cls True \
     -num_workers 1
 
+# original base model (i3d)
 # python train_i3d.py \
 #     -dataset 'charades' \
 #     -mode 'flow' \
@@ -34,3 +35,8 @@ python train_i3d.py \
 #     -num_classes 157 \
 #     -init_lr 0.1 \
 #     -use_cls True
+
+# original full crf
+#     -crf True \
+#     -conditional_crf True \
+#     -reg_crf 1e-3

@@ -100,10 +100,10 @@ def run(init_lr=0.1,
     ])
     test_transforms = transforms.Compose([videotransforms.CenterCrop(224)])
 
-    dataset = Dataset(train_split, 'training', root_train, mode, snippets, train_transforms)
+    dataset = Dataset(train_split, 'training', root_train, mode, snippets, train_transforms, num_classes=num_classes)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
 
-    val_dataset = Dataset(eval_split, 'testing', root_eval, mode, snippets, test_transforms)
+    val_dataset = Dataset(eval_split, 'testing', root_eval, mode, snippets, test_transforms, num_classes=num_classes)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size_eval, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
 
     dataloaders = {'train': dataloader, 'val': val_dataloader}

@@ -74,7 +74,7 @@ def load_flow_frames(image_dir, vid, start, num):
     frames.append(img)
     return np.asarray(frames, dtype=np.float32)
 
-def make_dataset(split_file, split, root, mode, snippets, num_classes=154):
+def make_dataset(split_file, split, root, mode, snippets, num_classes=155):
     count_items = 0
     dataset = []
     with open(split_file, 'r') as f:
@@ -109,8 +109,8 @@ def make_dataset(split_file, split, root, mode, snippets, num_classes=154):
 
 class Uavhuman(Dataset):
 
-    def __init__(self, split_file, split, root, mode, snippets, transforms=None):
-        self.data = make_dataset(split_file, split, root, mode, snippets)
+    def __init__(self, split_file, split, root, mode, snippets, transforms=None, num_classes=155):
+        self.data = make_dataset(split_file, split, root, mode, snippets, num_classes=num_classes)
         self.transforms = transforms
         self.mode = mode
         self.root = root
@@ -134,8 +134,8 @@ class Uavhuman(Dataset):
 
 class Uavhuman_eval(Dataset):
 
-    def __init__(self, split_file, split, root, mode, snippets, transforms=None):        
-        self.data = make_dataset(split_file, split, root, mode, snippets)
+    def __init__(self, split_file, split, root, mode, snippets, transforms=None, num_classes=155):
+        self.data = make_dataset(split_file, split, root, mode, snippets, num_classes=num_classes)
         self.transforms = transforms
         self.mode = mode
         self.root = root

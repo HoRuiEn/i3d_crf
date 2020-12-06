@@ -74,7 +74,7 @@ def run(mode='rgb',
     # setup dataset
     test_transforms = transforms.Compose([videotransforms.CenterCrop(224)])
 
-    val_dataset = Dataset(eval_split, 'testing', root_eval, mode, snippets, test_transforms)
+    val_dataset = Dataset(eval_split, 'testing', root_eval, mode, snippets, test_transforms, num_classes=num_classes)
     val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size_eval, shuffle=False, num_workers=num_workers, pin_memory=True)    
 
     dataloaders = {'val': val_dataloader}

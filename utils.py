@@ -12,6 +12,8 @@ def pt_var_to_numpy(var):
 
 
 def last_checkpoint(path):
+    if not os.path.isdir(path): return ''
+    
     list_elts = os.listdir(path)
 
     list_chkpt = []

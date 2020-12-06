@@ -19,7 +19,7 @@ parser.add_argument('-num_classes', type=int, default=65)
 parser.add_argument('-crf', type=bool, default=False)
 parser.add_argument('-num_updates_crf', type=int, default=1)
 parser.add_argument('-pairwise_cond_crf', type=bool, default=False)
-
+parser.add_argument('-num_workers', type=int, default=8)
 
 
 args = parser.parse_args()
@@ -43,9 +43,11 @@ from pytorch_i3d import InceptionI3d
 
 dataset = args.dataset
 if dataset=='multithumos':
-    from multithumos_dataset import Multithumos_eval as Dataset
+    from datasets.multithumos_dataset import Multithumos_eval as Dataset
 elif dataset=='charades':
-    from charades_dataset import Charades_eval as Dataset
+    from datasets.charades_dataset import Charades_eval as Dataset
+elif dataset=='uavhuman':
+    from datasets.uavhuman_dataset import Uavhuman_eval as Dataset
 
 from metrics import ap_calculator, map_calculator
 from utils import pt_var_to_numpy, last_checkpoint, get_reg_loss
@@ -67,12 +69,13 @@ def run(mode='rgb',
         crf=False,
         pairwise_cond_crf=False,
         num_updates_crf=1,
-        eval_checkpoint=-1):
+        eval_checkpoint=-1,
+        num_workers=8):
     # setup dataset
     test_transforms = transforms.Compose([videotransforms.CenterCrop(224)])
 
-    val_dataset = Dataset(eval_split, 'testing', root_eval, mode, snippets, test_transforms)
-    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size_eval, shuffle=False, num_workers=16, pin_memory=True)    
+    val_dataset = Dataset(eval_split, 'testing', root_eval, mode, snippets, test_transforms, num_classes=num_classes)
+    val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size_eval, shuffle=False, num_workers=num_workers, pin_memory=True)    
 
     dataloaders = {'val': val_dataloader}
     datasets = {'val': val_dataset}
@@ -85,15 +88,17 @@ def run(mode='rgb',
     else:
         i3d = InceptionI3d(num_classes, in_channels=3, use_crf=crf, num_updates_crf=num_updates_crf, pairwise_cond_crf=pairwise_cond_crf)
 
-    
     eval_checkpoint = args.eval_checkpoint
     if eval_checkpoint<0:
         checkpoint = last_checkpoint(save_model)
     else:
         checkpoint = str(eval_checkpoint).zfill(6)+'.pt'
 
-    i3d.load_state_dict(torch.load(save_model + checkpoint))
-    steps = int(checkpoint[:-3])
+    i3d.load_state_dict(torch.load(save_model + checkpoint), strict=False)
+    if checkpoint == '':
+        steps = 0
+    else:
+        steps = int(checkpoint[:-3])
     
     i3d.cuda()
     i3d = nn.DataParallel(i3d)
@@ -248,4 +253,5 @@ if __name__ == '__main__':
         crf=args.crf,
         pairwise_cond_crf=args.pairwise_cond_crf,
         num_updates_crf=args.num_updates_crf,
-        eval_checkpoint=args.eval_checkpoint)
+        eval_checkpoint=args.eval_checkpoint,
+        num_workers=args.num_workers)

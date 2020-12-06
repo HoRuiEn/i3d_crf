@@ -4,7 +4,7 @@ import cv2
 from PIL import Image
 from multiprocessing import Pool
 import argparse
-from IPython import embed #to debug
+# from IPython import embed #to debug
 import skvideo.io
 import scipy.misc
 
@@ -45,12 +45,10 @@ def save_flows(flows,image,flow_saving_dir,save_dir,num,bound):
     #scipy.misc.imsave(save_img,image)
 
     #save the flows
-    save_x=os.path.join(flow_saving_dir, save_dir, save_dir+'-{}x.jpg'.format(num))
-    save_y=os.path.join(flow_saving_dir, save_dir, save_dir+'-{}y.jpg'.format(num))
-    flow_x_img=Image.fromarray(flow_x)
-    flow_y_img=Image.fromarray(flow_y)
-    scipy.misc.imsave(save_x,flow_x_img)
-    scipy.misc.imsave(save_y,flow_y_img)
+    save_x=os.path.join(flow_saving_dir, save_dir, str(num).zfill(3)+'x.jpg')
+    save_y=os.path.join(flow_saving_dir, save_dir, str(num).zfill(3)+'y.jpg')
+    cv2.imwrite(save_x, flow_x)
+    cv2.imwrite(save_y, flow_y)
 
     return 0
 
@@ -64,57 +62,60 @@ def dense_flow(augs):
         bound: bi-bound parameter
     :return: no returns
     '''
-    video_name,save_dir,step,bound=augs
-    video_path=os.path.join(videos_root,video_name) #os.path.join(videos_root,video_name.split('_')[1],video_name)
-
+    videos_root,video_name,flow_saving_dir,save_dir,step,bound=augs
+    video_path = os.path.join(videos_root,video_name) #os.path.join(videos_root,video_name.split('_')[1],video_name)
+    print(video_path)
+    
     # provide two video-read methods: cv2.VideoCapture() and skvideo.io.vread(), both of which need ffmpeg support
 
-    # videocapture=cv2.VideoCapture(video_path)
-    # if not videocapture.isOpened():
-    #     print 'Could not initialize capturing! ', video_name
-    #     exit()
-    print(video_path)
-    try:
-        videocapture=skvideo.io.vread(video_path)
-    except:
-        print('{} read error! '.format(video_name))
-        return 0
-    print(video_name)
-    # if extract nothing, exit!
-    if videocapture.sum()==0:
-        print('Could not initialize capturing',video_name)
+    videocapture=cv2.VideoCapture(video_path)
+    if not videocapture.isOpened():
+        print('Could not initialize capturing! ', video_name)
         exit()
-    len_frame=len(videocapture)
+    len_frame = videocapture.get(cv2.CAP_PROP_FRAME_COUNT)
+    
+    # try:
+    #     videocapture=skvideo.io.vread(video_path)
+    # except:
+    #     print('{} read error! '.format(video_name))
+    #     return 0
+    # print(video_name)
+    # # if extract nothing, exit!
+    # if videocapture.sum()==0:
+    #     print('Could not initialize capturing',video_name)
+    #     exit()
+    # len_frame=len(videocapture)
+
     frame_num=0
     image,prev_image,gray,prev_gray=None,None,None,None
     num0=0
     while True:
-        #frame=videocapture.read()
         if num0>=len_frame:
             break
-        frame=videocapture[num0]
+        _, frame = videocapture.read()
+        # frame=videocapture[num0]
         num0+=1
         if frame_num==0:
             image=np.zeros_like(frame)
             gray=np.zeros_like(frame)
             prev_gray=np.zeros_like(frame)
             prev_image=frame
-            prev_gray=cv2.cvtColor(prev_image,cv2.COLOR_RGB2GRAY)
+            prev_gray=cv2.cvtColor(prev_image,cv2.COLOR_BGR2GRAY) # cv2 reads BGR
             frame_num+=1
             # to pass the out of stepped frames
             step_t=step
             while step_t>1:
-                #frame=videocapture.read()
+                frame=videocapture.read()
                 num0+=1
                 step_t-=1
             continue
 
         image=frame
-        gray=cv2.cvtColor(image,cv2.COLOR_RGB2GRAY)
+        gray=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY) # cv2 reads BGR
         frame_0=prev_gray
         frame_1=gray
         ##default choose the tvl1 algorithm
-        dtvl1=cv2.createOptFlow_DualTVL1()
+        dtvl1=cv2.optflow.DualTVL1OpticalFlow_create()
         flowDTVL1=dtvl1.calc(frame_0,frame_1,None)
         save_flows(flowDTVL1,image,flow_saving_dir,save_dir,frame_num,bound) #this is to save flows and img.
         prev_gray=gray
@@ -123,7 +124,7 @@ def dense_flow(augs):
         # to pass the out of stepped frames
         step_t=step
         while step_t>1:
-            #frame=videocapture.read()
+            frame=videocapture.read()
             num0+=1
             step_t-=1
 
@@ -165,6 +166,9 @@ if __name__ =='__main__':
     flow_saving_dir=args.flow_saving_dir
     videos_root=data_root #videos_root=os.path.join(data_root,'videos')
 
+    if not os.path.exists(flow_saving_dir):
+        os.makedirs(flow_saving_dir)
+
     #specify the augments
     num_workers=args.num_workers
     step=args.step
@@ -179,10 +183,12 @@ if __name__ =='__main__':
     #len_videos=#min(e_-s_,13320-s_) # if we choose the ucf101
     print('Found {} videos.'.format(len_videos))
     flows_dirs=[video.split('.')[0] for video in video_list]
+    video_roots=[videos_root for video in video_list]
+    flow_saving_dirs=[flow_saving_dir for video in video_list]
     print('Video list done!')
 
     pool=Pool(num_workers)
     if mode=='run':
-        pool.map(dense_flow,zip(video_list,flows_dirs,[step]*len(video_list),[bound]*len(video_list)))
+        pool.map(dense_flow,zip(video_roots,video_list,flow_saving_dirs,flows_dirs,[step]*len(video_list),[bound]*len(video_list)))
     else: #mode=='debug'
-        dense_flow((video_list[0],flows_dirs[0],step,bound))
+        dense_flow((video_roots[0],video_list[0],flow_saving_dirs[0],flows_dirs[0],step,bound))

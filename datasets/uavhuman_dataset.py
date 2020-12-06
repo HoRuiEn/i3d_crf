@@ -19,6 +19,9 @@ split_name_conversion = {
 
 pattern = r'P\d+S\d+G\d+B\d+H\d+UC\d+LC\d+A(\d+)R\d+_\d+'
 
+def check_img_path(path):
+    if not os.path.exists(path):
+        raise ValueError("Image cannot be found: %s" %fn)
 
 def video_to_tensor(pic):
     """Convert a ``numpy.ndarray`` to tensor.
@@ -35,7 +38,9 @@ def video_to_tensor(pic):
 def load_rgb_frames(image_dir, vid, start, num):
     frames = []
     for i in range(start, start+num):
-        img = cv2.imread(os.path.join(image_dir, vid, vid+'-'+str(i).zfill(6)+'.jpg'))[:, :, [2, 1, 0]]
+        fn = os.path.join(image_dir, vid, str(i).zfill(3)+'.jpg')
+        check_img_path(fn)
+        img = cv2.imread(fn)[:, :, [2, 1, 0]]
         w,h,c = img.shape
         if w < 226 or h < 226:
             d = 226.-min(w,h)
@@ -48,8 +53,13 @@ def load_rgb_frames(image_dir, vid, start, num):
 def load_flow_frames(image_dir, vid, start, num):
     frames = []
     for i in range(start, start+num):
-        imgx = cv2.imread(os.path.join(image_dir, vid, vid+'-'+str(i).zfill(6)+'x.jpg'), cv2.IMREAD_GRAYSCALE)
-        imgy = cv2.imread(os.path.join(image_dir, vid, vid+'-'+str(i).zfill(6)+'y.jpg'), cv2.IMREAD_GRAYSCALE)
+        xfn = os.path.join(image_dir, vid, str(i).zfill(3)+'x.jpg')
+        check_image_path(xfn)
+        imgx = cv2.imread(xfn, cv2.IMREAD_GRAYSCALE)
+        
+        yfn = os.path.join(image_dir, vid, str(i).zfill(3)+'y.jpg')
+        check_image_path(yfn)
+        imgy = cv2.imread(yfn, cv2.IMREAD_GRAYSCALE)
     
         w,h = imgx.shape
         if w < 224 or h < 224:

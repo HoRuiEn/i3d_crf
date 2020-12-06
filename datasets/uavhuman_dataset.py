@@ -71,7 +71,8 @@ def load_flow_frames(image_dir, vid, start, num):
         imgx = (imgx/255.)*2 - 1
         imgy = (imgy/255.)*2 - 1
         img = np.asarray([imgx, imgy]).transpose([1,2,0])
-    frames.append(img)
+        frames.append(img)
+    
     return np.asarray(frames, dtype=np.float32)
 
 def make_dataset(split_file, split, root, mode, snippets, num_classes=155):

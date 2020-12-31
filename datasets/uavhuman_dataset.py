@@ -21,7 +21,7 @@ pattern = r'P\d+S\d+G\d+B\d+H\d+UC\d+LC\d+A(\d+)R\d+_\d+'
 
 def check_image_path(path):
     if not os.path.exists(path):
-        raise ValueError("Image cannot be found: %s" %fn)
+        raise ValueError("Image cannot be found: %s" %path)
 
 def video_to_tensor(pic):
     """Convert a ``numpy.ndarray`` to tensor.
@@ -90,6 +90,8 @@ def make_dataset(split_file, split, root, mode, snippets, num_classes=155):
             continue
 
         num_frames = len(os.listdir(fn))
+        if mode == "flow":
+            num_frames = num_frames//3
         
         for j in range(0, num_frames, snippets):
             if j + snippets > num_frames:

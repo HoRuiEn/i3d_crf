@@ -149,7 +149,11 @@ def run(init_lr=0.1,
 
         
         i3d.load_state_dict(torch.load(args.save_model + checkpoint))
-        steps = int(checkpoint[:-3])
+        if checkpoint.isnumeric():
+            steps = int(checkpoint[:-3])
+        else:
+            steps = 0
+
         if dataset=='thumos':
             epoch = int(steps*snippets*batch_size*num_steps_per_update / 1214016)
         else:

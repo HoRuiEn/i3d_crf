@@ -99,8 +99,20 @@ def make_dataset(split_file, split, root, mode, snippets, num_classes=155):
             label = np.zeros((num_classes, snippets), np.float32)
             ann = int(re.match(pattern, vid).groups()[0])
             
+            files_exist = True
+
             for frame in range(j + 1, j + snippets + 1):
+                fn = os.path.join(root, vid, str(frame).zfill(3)+'.jpg')
+                xfn = os.path.join(root, vid, str(frame).zfill(3)+'x.jpg')
+                yfn = os.path.join(root, vid, str(frame).zfill(3)+'y.jpg')
+                if not os.path.exists(fn) or \
+                    mode == "flow" and (not os.path.exists(xfn) or not os.path.exists(yfn)):
+                    files_exist = False
+                    break
                 label[ann, (frame-1)%snippets] = 1
+            
+            if not files_exist:
+                continue
 
             dataset.append((vid, j+1, label))
             count_items += 1

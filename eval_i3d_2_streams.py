@@ -20,7 +20,7 @@ parser.add_argument('-eval_checkpoint_rgb', type=int, default=-1)
 parser.add_argument('-eval_checkpoint_flow', type=int, default=-1)
 parser.add_argument('-pairwise_cond_crf', type=bool, default=False)
 parser.add_argument('-dataset', help='multithumos or charades', type=str, default='multithumos')
-
+parser.add_argument('-num_workers', type=int, default=4)
 
 args = parser.parse_args()
 
@@ -43,9 +43,11 @@ from pytorch_i3d import InceptionI3d
 
 dataset = args.dataset
 if dataset=='multithumos':
-    from multithumos_dataset import Multithumos_eval as Dataset
+    from datasets.multithumos_dataset import Multithumos_eval as Dataset
 elif dataset=='charades':
-    from charades_dataset import Charades_eval as Dataset
+    from datasets.charades_dataset import Charades_eval as Dataset
+elif dataset=='uavhuman':
+    from datasets.uavhuman_dataset import Uavhuman_eval as Dataset
 
 from metrics import ap_calculator, map_calculator
 from utils import pt_var_to_numpy, last_checkpoint, get_reg_loss
@@ -69,18 +71,19 @@ def run(root_eval_rgb,
         pairwise_cond_crf=False,
         num_updates_crf=1,
         eval_checkpoint_rgb=-1,
-        eval_checkpoint_flow=-1):
+        eval_checkpoint_flow=-1,
+        num_workers=4):
 
     # setup dataset
     test_transforms = transforms.Compose([videotransforms.CenterCrop(224)])
 
-    val_dataset_rgb = Dataset(eval_split, 'testing', root_eval_flow, 'flow', snippets, test_transforms) 
+    val_dataset_rgb = Dataset(eval_split, 'testing', root_eval_flow, 'flow', snippets, test_transforms, num_classes=num_classes) 
     val_dataset_rgb.mode = 'rgb'
     val_dataset_rgb.root = root_eval_rgb
-    val_dataloader_rgb = torch.utils.data.DataLoader(val_dataset_rgb, batch_size=batch_size_eval, shuffle=False, num_workers=4, pin_memory=True) 
+    val_dataloader_rgb = torch.utils.data.DataLoader(val_dataset_rgb, batch_size=batch_size_eval, shuffle=False, num_workers=num_workers, pin_memory=True) 
 
-    val_dataset_flow = Dataset(eval_split, 'testing', root_eval_flow, 'flow', snippets, test_transforms)
-    val_dataloader_flow = torch.utils.data.DataLoader(val_dataset_flow, batch_size=batch_size_eval, shuffle=False, num_workers=4, pin_memory=True)        
+    val_dataset_flow = Dataset(eval_split, 'testing', root_eval_flow, 'flow', snippets, test_transforms, num_classes=num_classes)
+    val_dataloader_flow = torch.utils.data.DataLoader(val_dataset_flow, batch_size=batch_size_eval, shuffle=False, num_workers=num_workers, pin_memory=True)        
 
     dataloaders = {'val_rgb': val_dataloader_rgb, 'val_flow': val_dataloader_flow}
     datasets = {'val_rgb': val_dataset_rgb, 'val_flow': val_dataset_flow}
@@ -99,13 +102,19 @@ def run(root_eval_rgb,
     else:
         checkpoint_flow = str(eval_checkpoint_flow).zfill(6)+'.pt'
 
-    i3d_rgb.load_state_dict(torch.load(args.save_model_rgb + checkpoint_rgb))
-    steps_rgb = int(checkpoint_rgb[:-3])
-
-    i3d_flow.load_state_dict(torch.load(args.save_model_flow + checkpoint_flow))
-    steps_flow = int(checkpoint_flow[:-3])
-
+    i3d_rgb.load_state_dict(torch.load(os.path.join(args.save_model_rgb + checkpoint_rgb)), strict=False)
+    if checkpoint_rgb.isnumeric():
+        steps_rgb = int(checkpoint_rgb[:-3])
+    else:
+        steps_rgb = 0
     
+    i3d_flow.load_state_dict(torch.load(os.path.join(args.save_model_flow + checkpoint_flow)), strict=False)
+    if checkpoint_flow.isnumeric():
+        steps_flow = int(checkpoint_flow[:-3])
+    else:
+        steps_flow = 0
+    
+
     i3d_rgb.cuda()
     i3d_rgb = nn.DataParallel(i3d_rgb)
 
@@ -277,4 +286,5 @@ if __name__ == '__main__':
         pairwise_cond_crf=args.pairwise_cond_crf,
         num_updates_crf=args.num_updates_crf,
         eval_checkpoint_rgb=args.eval_checkpoint_rgb,
-        eval_checkpoint_flow=args.eval_checkpoint_flow)
+        eval_checkpoint_flow=args.eval_checkpoint_flow,
+        num_workers=args.num_workers)

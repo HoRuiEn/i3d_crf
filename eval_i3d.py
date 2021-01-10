@@ -94,11 +94,12 @@ def run(mode='rgb',
     else:
         checkpoint = str(eval_checkpoint).zfill(6)+'.pt'
 
-    i3d.load_state_dict(torch.load(save_model + checkpoint), strict=False)
-    if checkpoint == '':
-        steps = 0
-    else:
+    i3d.load_state_dict(torch.load(os.path.join(save_model + checkpoint)), strict=False)
+    if checkpoint.isnumeric():
         steps = int(checkpoint[:-3])
+    else:
+        steps = 0
+        
     
     i3d.cuda()
     i3d = nn.DataParallel(i3d)

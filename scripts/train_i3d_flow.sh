@@ -1,18 +1,18 @@
 
 python train_i3d.py \
     -dataset 'uavhuman' \
-    -mode 'rgb' \
-    -save_model 'D:/repos/i3d_crf/models' \
-    -root_train 'D:/data/pose_detection_sample/kinect' \
-    -train_split 'D:/data/pose_detection_sample/train_test_split_orig.json' \
-    -root_eval 'D:/data/pose_detection_sample/kinect' \
-    -eval_split 'D:/data/pose_detection_sample/train_test_split_orig.json' \
+    -mode 'flow' \
+    -save_model 'D:/repos/i3d_crf/models/flow/' \
+    -root_train 'D:/data/pose_detection_sample/kinectrgbs' \
+    -train_split 'D:/data/pose_detection_sample/train_test_split.json' \
+    -root_eval 'D:/data/pose_detection_sample/kinectrgbs' \
+    -eval_split 'D:/data/pose_detection_sample/train_test_split.json' \
     -snippets 64 \
     -batch_size 1 \
     -batch_size_eval 1 \
     -saving_steps 10 \
     -num_steps_per_update 1 \
-    -num_classes 154 \
+    -num_classes 400 \
     -max_steps 100 \
     -init_lr 0.1 \
     -use_cls True \

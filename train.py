@@ -2,6 +2,7 @@ import os
 import argparse
 import logging
 import sys
+import re
 
 import torch
 import torch.nn as nn
@@ -77,14 +78,13 @@ def train(args):
     
     if args.resume is not None:
         print('Resuming {}...'.format(args.resume))
-        pretrained_point = torch.load(args.resume)
-        pretrained_point = checkpoint['state_dict']
-        tot_losses = checkpoint['loss']
-        steps = int(args.resume[:-3])
-        if dataset=='thumos':
-            epoch = int(steps*args.snippets*args.batch_size / 1214016)
-        else:
-            epoch = int(steps*args.snippets*args.batch_size / 5482688)
+        pretrained_point = torch.load(args.resume)['state_dict']
+        steps = int(re.findall(r'\d+', os.path.basename(args.resume))[0])
+        # tot_losses = checkpoint['loss']
+        # if dataset=='thumos':
+        #     epoch = int(steps*args.snippets*args.batch_size / 1214016)
+        # else:
+        #     epoch = int(steps*args.snippets*args.batch_size / 5482688)
     
     # Model loading
     net = InceptionI3d(num_classes=400, 
@@ -118,6 +118,7 @@ def train(args):
     # Training loop
     for epoch in range(args.max_epoch):
         for cnt, (imgs, labels) in enumerate(train_loader):
+            steps += 1
             imgs = imgs.to(device)
             labels = labels.to(device)
 
@@ -153,8 +154,6 @@ def train(args):
                 torch.save(save_dict, ckpt_name)
             
             lr_sched.step()
-            steps += 1
-
             #import ipdb; ipdb.set_trace()
 
 

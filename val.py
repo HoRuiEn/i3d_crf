@@ -94,7 +94,8 @@ def train(args):
                        num_updates_crf=args.num_updates_crf, 
                        pairwise_cond_crf=args.pairwise_cond_crf)
     net.replace_logits(args.num_classes)
-    net.load_state_dict(torch.load(args.ckpt, map_location='cpu')['state_dict'], strict=False)
+    net = torch.nn.DataParallel(net)
+    net.load_state_dict(torch.load(args.ckpt)['state_dict'], strict=False)
     for param in net.parameters():
         param.requires_grad = False
     net = net.to(device)
@@ -122,9 +123,9 @@ def train(args):
 
             labels = labels[:, :, 0].argmax(dim=1)
             
-            probs.append(prob.cpu())
-            preds.append(pred.cpu())
-            anns.append(labels.cpu())
+            probs.append(prob)
+            preds.append(pred)
+            anns.append(labels)
             
         
         anns = torch.cat(anns)

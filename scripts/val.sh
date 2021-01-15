@@ -3,7 +3,7 @@ python val.py \
     --max_epoch 100 \
     --mode 'flow' \
     --exp 'D:/data/pose_detection_sample/experiments' \
-    --ckpt "D:/data/pose_detection_sample/experiments/steps0000001.pt" \
+    --ckpt "D:/data/pose_detection_sample/experiments/steps0000008.pt" \
     --save_every 1000 \
     --dataset 'uavhuman' \
     --root_eval 'D:/data/pose_detection_sample/kinectrgbs_with_missing' \
@@ -11,6 +11,6 @@ python val.py \
     --num_frames 64 \
     --num_classes 155 \
     --lr 0.002 \
-    --batch_size 1 \
-    --num_workers 1 \
+    --batch_size 2 \
+    --num_workers 2 \
     --weight_decay 0.0000001

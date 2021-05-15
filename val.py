@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from dataset import videotransforms
+from datasets import videotransforms
 
 from pytorch_i3d import InceptionI3d
 

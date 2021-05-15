@@ -49,7 +49,7 @@ from torch.autograd import Variable
 
 import torchvision
 from torchvision import datasets, transforms
-from dataset import videotransforms
+from datasets import videotransforms
 
 
 import numpy as np

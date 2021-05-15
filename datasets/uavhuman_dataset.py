@@ -12,7 +12,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision.utils import save_image
 from torchvision import transforms
-import videotransforms
+from datasets import videotransforms
 
 split_name_conversion = {
     'training': 'train_fns',
@@ -151,7 +151,7 @@ class Uavhuman(Dataset):
 
 
 if __name__ == "__main__":
-
+    import videotransforms
     train_transforms = transforms.Compose([
         videotransforms.CenterCrop(224)
     ])

@@ -49,7 +49,7 @@ from torch.autograd import Variable
 
 import torchvision
 from torchvision import datasets, transforms
-import videotransforms
+from dataset import videotransforms
 
 
 import numpy as np
@@ -213,7 +213,7 @@ def run(init_lr=0.1,
                 count_batch += 1
                 num_iter += 1
                 # get the inputs
-                inputs, labels = data
+                vid, start, inputs, labels = data
 
                 # wrap them in Variable
                 inputs = Variable(inputs.cuda())

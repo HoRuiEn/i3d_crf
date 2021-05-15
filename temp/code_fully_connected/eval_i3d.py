@@ -34,7 +34,7 @@ from torch.autograd import Variable
 
 import torchvision
 from torchvision import datasets, transforms
-import videotransforms
+from dataset import videotransforms
 
 
 import numpy as np

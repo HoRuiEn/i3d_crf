@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torchvision import transforms
-import videotransforms
+from dataset import videotransforms
 
 from pytorch_i3d import InceptionI3d
 
@@ -109,7 +109,7 @@ def train(args):
     #import ipdb; ipdb.set_trace()
 
     with torch.no_grad():
-        for cnt, (imgs, labels) in enumerate(val_loader):
+        for cnt, (_, _, imgs, labels) in enumerate(val_loader):
             print('Evaluating in progress {}/{}...'.format(cnt, len(val_loader)))
             imgs = imgs.to(device)
 

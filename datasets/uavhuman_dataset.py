@@ -10,7 +10,9 @@ import cv2
 
 import torch
 from torch.utils.data import DataLoader, Dataset
-
+from torchvision.utils import save_image
+from torchvision import transforms
+import videotransforms
 
 split_name_conversion = {
     'training': 'train_fns',
@@ -139,34 +141,28 @@ class Uavhuman(Dataset):
         else:
             imgs = load_flow_frames(self.root, vid, start, self.snippets)
 
-        imgs = self.transforms(imgs)
+        if self.transforms is not None:
+            imgs = self.transforms(imgs)
         
-        return video_to_tensor(imgs), torch.from_numpy(label)
-    
-    def __len__(self):
-        return len(self.data)
-
-
-class Uavhuman_eval(Dataset):
-
-    def __init__(self, split_file, split, root, mode, snippets, transforms=None, num_classes=155):
-        self.data = make_dataset(split_file, split, root, mode, snippets, num_classes=num_classes)
-        self.transforms = transforms
-        self.mode = mode
-        self.root = root
-        self.snippets = snippets
-
-    def __getitem__(self, index):
-        vid, start, label = self.data[index]
-
-        if self.mode == 'rgb':
-            imgs = load_rgb_frames(self.root, vid, start, self.snippets)
-        else:
-            imgs = load_flow_frames(self.root, vid, start, self.snippets)
-
-        imgs = self.transforms(imgs)
-
         return vid, start, video_to_tensor(imgs), torch.from_numpy(label)
 
     def __len__(self):
         return len(self.data)
+
+
+if __name__ == "__main__":
+
+    train_transforms = transforms.Compose([
+        videotransforms.CenterCrop(224)
+    ])
+    dataset = Uavhuman(split_file='D:/data/pose_detection_sample/train_test_split.json',
+                       split='training',
+                       root='D:/data/pose_detection_sample/kinect',
+                       mode='rgb',
+                       snippets=64,
+                       transforms=train_transforms)
+    dloader = DataLoader(dataset, batch_size=1)
+    for cnt, (filename, start, images, labels) in enumerate(dloader):
+        import ipdb; ipdb.set_trace()
+        # save_iamge(images[:, :, 0, :, :], 'D:/Desktop/test.png')
+    import ipdb; ipdb.set_trace()

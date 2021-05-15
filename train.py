@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
-import videotransforms
+from dataset import videotransforms
 
 from pytorch_i3d import InceptionI3d
 
@@ -62,7 +62,7 @@ def train(args):
                                              batch_size=args.batch_size, 
                                              shuffle=True, 
                                              num_workers=args.num_workers, 
-                                             pin_memory=True, 
+                                             pin_memory=False, 
                                              drop_last=True)
 
     # Checkpoint loading
@@ -117,7 +117,7 @@ def train(args):
         
     # Training loop
     for epoch in range(args.max_epoch):
-        for cnt, (imgs, labels) in enumerate(train_loader):
+        for cnt, (_, _, imgs, labels) in enumerate(train_loader):
             steps += 1
             imgs = imgs.to(device)
             labels = labels.to(device)

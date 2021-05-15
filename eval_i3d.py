@@ -34,7 +34,7 @@ from torch.autograd import Variable
 
 import torchvision
 from torchvision import datasets, transforms
-import videotransforms
+from dataset import videotransforms
 
 
 import numpy as np
@@ -47,7 +47,7 @@ if dataset=='multithumos':
 elif dataset=='charades':
     from datasets.charades_dataset import Charades_eval as Dataset
 elif dataset=='uavhuman':
-    from datasets.uavhuman_dataset import Uavhuman_eval as Dataset
+    from datasets.uavhuman_dataset import Uavhuman as Dataset
 
 from metrics import ap_calculator, map_calculator
 from utils import pt_var_to_numpy, last_checkpoint, get_reg_loss

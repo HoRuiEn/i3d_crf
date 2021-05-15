@@ -52,16 +52,20 @@ def train(args):
     if args.dataset == 'uavhuman_videos':
         train_transforms = transforms.Compose([transforms.RandomCrop(224),
                                             transforms.RandomHorizontalFlip()])
+        train_set = Dataset(root=args.root_train, 
+                            num_frames=args.num_frames, 
+                            transforms=train_transforms, 
+                            num_classes=args.num_classes)
     else:
         train_transforms = transforms.Compose([videotransforms.RandomCrop(224),
                                             videotransforms.RandomHorizontalFlip()])
-    train_set = Dataset(split_file=args.train_split, 
-                        split='training', 
-                        root=args.root_train, 
-                        mode=args.mode, 
-                        snippets=args.num_frames, 
-                        transforms=train_transforms, 
-                        num_classes=args.num_classes)
+        train_set = Dataset(split_file=args.train_split, 
+                            split='training', 
+                            root=args.root_train, 
+                            mode=args.mode, 
+                            snippets=args.num_frames, 
+                            transforms=train_transforms, 
+                            num_classes=args.num_classes)
     train_loader = torch.utils.data.DataLoader(dataset=train_set, 
                                              batch_size=args.batch_size, 
                                              shuffle=True, 

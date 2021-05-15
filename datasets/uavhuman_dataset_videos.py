@@ -14,6 +14,7 @@ Alternatively, labels can be in the form for binary classification:
 import re
 import json
 import os
+import glob
 import random
 
 import numpy as np
@@ -27,18 +28,13 @@ from torchvision import transforms
 class Uavhuman(Dataset):
 
     def __init__(self, 
-                 split_file: str, 
-                 split: str, 
                  root: str, 
-                 mode: str,
-                 snippets: int, 
+                 num_frames: int, 
                  transforms: transforms.Compose = None, 
                  num_classes: int = 155):
 
-        self.split_file = split_file
-        self.split = split
         self.root = root
-        self.snippets = snippets
+        self.num_frames = num_frames
         self.transforms = transforms
         self.num_classes = num_classes
 
@@ -52,8 +48,7 @@ class Uavhuman(Dataset):
 
     def get_videos(self, binary_labels: bool = True) -> list(tuple((str, np.array))):
         """
-        Obtains video names according to json file containing
-        video names for training and testing 
+        Obtain video names and corresponding label in directory recursively.
         
         Args:
             binary_labels: set true if require binary labels (Batch x Classes x Frames)
@@ -62,26 +57,23 @@ class Uavhuman(Dataset):
             List containing Tuples, each with filename and corresponding label
         """
         dataset = []
-        with open(self.split_file, 'r') as f:
-            train_test_split = json.load(f)
-
-        vids = sorted(train_test_split[self.split_name_conversion[self.split]])    
-        vids = [os.path.basename(filename) for filename in vids]
+        vids = [f for f in glob.glob(os.path.join(self.root, "*"), recursive=True) 
+            if f.endswith('avi')]
         
-        for basename in vids:
-            filename = os.path.join(self.root, basename)
+        for filename in vids:
+            basename = os.path.basename(filename)
             if not os.path.exists(filename):
                 raise ValueError('%s does not exist!' %filename)
             
             ann = int(re.match(self.filename_regex, basename).groups()[0])
             if binary_labels:
-                label = np.zeros((self.num_classes, self.snippets), np.float32)
+                label = np.zeros((self.num_classes, self.num_frames), np.float32)
                 label[ann, :] = 1
             else:
                 label = ann
             dataset.append((basename, label))
         
-        print("Make dataset {}: {} video examples".format(self.split, len(vids)))
+        print("Found %s video examples" %(len(vids)))
 
         return dataset
     
@@ -100,12 +92,12 @@ class Uavhuman(Dataset):
         frames = capture.get(cv2.CAP_PROP_FRAME_COUNT)
         
         # random start location
-        start_frame = random.randint(0, frames - self.snippets - 1) # both bounds inclusive
+        start_frame = random.randint(0, frames - self.num_frames - 1) # both bounds inclusive
         for i in range(start_frame):
             _, _ = capture.read()
 
         frames = []
-        for _ in range(self.snippets):
+        for _ in range(self.num_frames):
             ret, frame = capture.read()
             frame = frame[:, :, [2, 1, 0]]
             frame = transforms.ToTensor()(frame)
@@ -132,10 +124,8 @@ if __name__ == "__main__":
         transforms.CenterCrop((224,224)),
         transforms.Normalize([0.5], [0.5])
     ])
-    dataset = Uavhuman(split_file='D:/data/UAVHuman/nightvision/train_test_split.json',
-                       split='training',
-                       root='D:/data/UAVHuman/nightvision',
-                       snippets=64,
+    dataset = Uavhuman(root='D:/data/UAVHuman/nightvision',
+                       num_frames=64,
                        transforms=train_transforms)
     dataloader = DataLoader(dataset, batch_size=1)
     for cnt, (filename, images, labels) in enumerate(dataloader):

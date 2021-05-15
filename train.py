@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from dataset import videotransforms
+from datasets import videotransforms
 
 from pytorch_i3d import InceptionI3d
 
@@ -49,8 +49,12 @@ def train(args):
     #                                        transforms.ToTensor(),
     #                                        transforms.Normalize([0.5], [0.5])
     #                                        ])
-    train_transforms = transforms.Compose([videotransforms.RandomCrop(224),
-                                           videotransforms.RandomHorizontalFlip()])
+    if args.dataset == 'uavhuman_videos':
+        train_transforms = transforms.Compose([transforms.RandomCrop(224),
+                                            transforms.RandomHorizontalFlip()])
+    else:
+        train_transforms = transforms.Compose([videotransforms.RandomCrop(224),
+                                            videotransforms.RandomHorizontalFlip()])
     train_set = Dataset(split_file=args.train_split, 
                         split='training', 
                         root=args.root_train, 
@@ -195,5 +199,7 @@ if __name__ == "__main__":
         from datasets.charades_dataset import Charades as Dataset
     elif args.dataset=='uavhuman':
         from datasets.uavhuman_dataset import Uavhuman as Dataset
+    elif args.dataset=='uavhuman_videos':
+        from datasets.uavhuman_dataset_videos import Uavhuman as Dataset
     
     train(args)
